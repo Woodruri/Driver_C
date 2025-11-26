@@ -31,7 +31,7 @@ static int device_release(struct inode *, struct file *);
 
 /*==============================================================================
 global vars
-/*==============================================================================*/
+==============================================================================*/
 
 //major # is the device # for this driver, minor # is the variant of major #
 static int major_number; 
@@ -53,25 +53,42 @@ driver code
 
 //called when someone opens our device
 static int device_open(struct inode *inodePath, struct file *filePath) {
-    printk(KERN_INFO, "virtual_device: Device opened\n");
+    printk(KERN_INFO "virtual_device: Device opened\n");
     return 0;
 }
 
 //called when someone closes our device
 static int device_release(struct inode *inodePath, struct file *filePath) {
-    printk(KERN_INFO, "virtual_device: Device closed\n");
+    printk(KERN_INFO "virtual_device: Device closed\n");
     return 0;
 }
 
 //driver init
 static int __init virtual_device_init(void) {
-    printk(KERN_INFO, "virtual_device: Driver loaded\n");
+    printk(KERN_INFO "virtual_device: Driver loaded\n");
+
+    //register major_number for character device
+    major_number = register_chrdev(0, DEVICE_NAME, &fops);
+    if (major_number < 0) {
+        printk(KERN_ALERT "virtual_device: Failed to register major number\n");
+        return major_number;
+    }
+
+    // we keep it extra verbose here
+    printk(KERN_INFO "virtual_device: Registered character device with major number %d\n", major_number);
+    printk(KERN_INFO "virtual_device: Create device with: sudo mknod /dev/%s c %d 0\n",
+           DEVICE_NAME, major_number);
+
     return 0;
 }
 
 //driver exit
 static void __exit virtual_device_exit(void) {
-    printk(KERN_INFO, "virtual_device: Driver unloaded\n");
+    //unregister the character device
+    unregister_chrdev(major_number, DEVICE_NAME);
+
+    printk(KERN_INFO "virtual_device: Driver unloaded\n");
+
 }
 
 
