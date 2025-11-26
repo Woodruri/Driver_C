@@ -11,6 +11,7 @@ includes
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/fs.h> //character device operations
+#include <linux/device.h> //to automatically make devices
 
 /*==============================================================================
 defines
@@ -35,6 +36,8 @@ global vars
 
 //major # is the device # for this driver, minor # is the variant of major #
 static int major_number; 
+static struct class *device_class = NULL;
+static struct device *device_device = NULL;
 
 
 /*==============================================================================
@@ -76,15 +79,34 @@ static int __init virtual_device_init(void) {
 
     // we keep it extra verbose here
     printk(KERN_INFO "virtual_device: Registered character device with major number %d\n", major_number);
-    printk(KERN_INFO "virtual_device: Create device with: sudo mknod /dev/%s c %d 0\n",
-           DEVICE_NAME, major_number);
+    
+    //create device class
+    device_class = class_create("virtual_device_class");
+    if (IS_ERR(device_class)) {
+        unregister_chrdev(major_number, DEVICE_NAME);
+        printk(KERN_ERR "virtual_device: failed to create device_class\n");
+        return PTR_ERR(device_class);
+    }
+
+    //create device file
+    device_device = device_create(device_class, NULL, MKDEV(major_number, 0), NULL, DEVICE_NAME);
+    if (IS_ERR(device_device)) {
+        class_destroy(device_class);
+        unregister_chrdev(major_number, DEVICE_NAME);
+        printk(KERN_ERR "virtual device: failed to create device_device\n");
+        return PTR_ERR(device_device);
+    }
+    
+    printk(KERN_INFO "virtual_device: Created device at /dev/%s\n", DEVICE_NAME);
 
     return 0;
 }
 
 //driver exit
 static void __exit virtual_device_exit(void) {
-    //unregister the character device
+    //destroy and unregister the character device and class
+    device_destroy(device_class, MKDEV(major_number, 0));
+    class_destroy(device_class);
     unregister_chrdev(major_number, DEVICE_NAME);
 
     printk(KERN_INFO "virtual_device: Driver unloaded\n");
