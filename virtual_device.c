@@ -19,6 +19,7 @@ defines
 
 #define DEVICE_NAME "virtual_device"
 
+
 /*==============================================================================
 prototypes
 ==============================================================================*/
@@ -27,12 +28,14 @@ prototypes
 static int device_open(struct inode *, struct file *);
 static int device_release(struct inode *, struct file *);
 
+
 /*==============================================================================
 global vars
 /*==============================================================================*/
 
 //major # is the device # for this driver, minor # is the variant of major #
 static int major_number; 
+
 
 /*==============================================================================
 structs
@@ -42,6 +45,7 @@ static struct file_operations fops = {
     .open = device_open,
     .release = device_release,
 };
+
 
 /*==============================================================================
 driver code
@@ -70,12 +74,14 @@ static void __exit virtual_device_exit(void) {
     printk(KERN_INFO, "virtual_device: Driver unloaded\n");
 }
 
+
 /*==============================================================================
 driver init/exit
 ==============================================================================*/
 
 module_init(virtual_device_init);
 module_exit(virtual_device_exit);
+
 
 /*==============================================================================
 driver info
